@@ -13,6 +13,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -27,6 +28,18 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
+    public Customizer<FormLoginConfigurer<HttpSecurity>>  formLoginConfigurer() {
+        return formLoginConfigurer -> formLoginConfigurer
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .defaultSuccessUrl("/")
+                .failureUrl("/login?error=true")
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .permitAll();
+    };
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
@@ -35,7 +48,7 @@ public class SecurityConfig {
                 .requestMatchers("/mypage").hasRole("USER")
                 .requestMatchers("/config").hasRole("ADMIN")
                 .anyRequest().authenticated()
-        ).formLogin(Customizer.withDefaults());
+        ).formLogin(formLoginConfigurer());
         return http.build();
     }
 
