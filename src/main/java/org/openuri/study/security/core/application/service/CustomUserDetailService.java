@@ -13,11 +13,21 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import java.util.Collection;
 import java.util.Set;
 
+/**
+ * 사용자 인증을 위한 UserDetailsService 구현체
+ *
+ */
 @UseCase
 @RequiredArgsConstructor
 public class CustomUserDetailService implements UserDetailsService {
     private final FindUserPort findUserPort;
 
+    /**
+     * DB 에서 사용자 정보를 조회하여 UserDetails 객체를 생성한다.
+     * @param username the username identifying the user whose data is required.
+     * @return a fully populated user record (never <code>null</code>)
+     * @throws UsernameNotFoundException
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 

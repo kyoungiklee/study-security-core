@@ -1,17 +1,17 @@
 package org.openuri.study.security.core.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openuri.study.security.core.application.port.FindUserPort;
+import org.openuri.study.security.core.application.service.CustomAutenticationProvider;
 import org.openuri.study.security.core.application.service.CustomUserDetailService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.userdetails.User;
@@ -41,32 +41,38 @@ public class SecurityConfig {
     }
 
     @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return new WebSecurityCustomizer() {
-            @Override
-            public void customize(WebSecurity web) {
-                web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
-            }
-        };
+    public WebSecurityCustomizer ignoringCustomizer() {
+        return web -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
     /**
      * CustomUserDetailService를 사용하여 사용자 정보를 DB Access를 통해 관리할 수 있다.
+     *
      * @param userDetailsService UserDetailsService
-     * @param passwordEncoder PasswordEncoder
+     * @param passwordEncoder    PasswordEncoder
      * @return AuthenticationManager
-     * @throws Exception Exception
      */
     @Bean
-    public AuthenticationManager authenticationManager(CustomUserDetailService userDetailsService, PasswordEncoder passwordEncoder) throws Exception {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder);
+    public AuthenticationManager authenticationManager(CustomUserDetailService userDetailsService, PasswordEncoder passwordEncoder) {
+        AuthenticationProvider authenticationProvider = authenticationProvider(userDetailsService, passwordEncoder);
         return new ProviderManager(authenticationProvider);
+    }
+
+
+    /**
+     * CustomAutenticationProvider를 사용하여 사용자를 인증 처리한다.
+     * @param userDetailsService CustomUserDetailService
+     * @param passwordEncoder PasswordEncoder
+     * @return AuthenticationProvider
+     */
+    @Bean
+    public AuthenticationProvider authenticationProvider(CustomUserDetailService userDetailsService, PasswordEncoder passwordEncoder) {
+        return new CustomAutenticationProvider(userDetailsService, passwordEncoder);
     }
 
     /**
      * InMemoryUserDetailsManager를 사용하여 사용자 정보를 관리할 수 있다.
+     *
      * @return UserDetailsService
      */
     @Bean
@@ -89,11 +95,6 @@ public class SecurityConfig {
         return new InMemoryUserDetailsManager(user, manager, admin);
     }
 
-    /*@Bean
-    public UserDetailsService customUserDetailsService(FindUserPort findUserPort) {
-        return new CustomUserDetailService(findUserPort);
-    }
-*/
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
