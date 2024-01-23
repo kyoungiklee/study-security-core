@@ -26,7 +26,7 @@ public class CustomUserDetailService implements UserDetailsService {
      * DB 에서 사용자 정보를 조회하여 UserDetails 객체를 생성한다.
      * @param username the username identifying the user whose data is required.
      * @return a fully populated user record (never <code>null</code>)
-     * @throws UsernameNotFoundException
+     * @throws UsernameNotFoundException if the user could not be found or the user has no
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
