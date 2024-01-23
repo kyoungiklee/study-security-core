@@ -1,6 +1,8 @@
 package org.openuri.study.security.core.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.openuri.study.security.core.application.port.FindUserPort;
+import org.openuri.study.security.core.application.service.CustomUserDetailService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,14 +50,25 @@ public class SecurityConfig {
         };
     }
 
+    /**
+     * CustomUserDetailService를 사용하여 사용자 정보를 DB Access를 통해 관리할 수 있다.
+     * @param userDetailsService UserDetailsService
+     * @param passwordEncoder PasswordEncoder
+     * @return AuthenticationManager
+     * @throws Exception Exception
+     */
     @Bean
-    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) throws Exception {
+    public AuthenticationManager authenticationManager(CustomUserDetailService userDetailsService, PasswordEncoder passwordEncoder) throws Exception {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
         authenticationProvider.setUserDetailsService(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(authenticationProvider);
     }
 
+    /**
+     * InMemoryUserDetailsManager를 사용하여 사용자 정보를 관리할 수 있다.
+     * @return UserDetailsService
+     */
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails user = User.builder()
@@ -76,6 +89,11 @@ public class SecurityConfig {
         return new InMemoryUserDetailsManager(user, manager, admin);
     }
 
+    /*@Bean
+    public UserDetailsService customUserDetailsService(FindUserPort findUserPort) {
+        return new CustomUserDetailService(findUserPort);
+    }
+*/
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

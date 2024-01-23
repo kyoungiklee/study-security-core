@@ -1,13 +1,15 @@
 package org.openuri.study.security.core.adapter.out.persistence.account;
 
 import lombok.RequiredArgsConstructor;
+import org.openuri.study.security.core.application.port.FindUserPort;
 import org.openuri.study.security.core.application.port.out.RegisterUserPort;
 import org.openuri.study.security.core.common.Adapter;
 import org.openuri.study.security.core.domain.Account;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @Adapter
 @RequiredArgsConstructor
-public class AccountAdapter implements RegisterUserPort {
+public class AccountAdapter implements RegisterUserPort, FindUserPort {
 
     private final AccountRepository accountRepository;
     @Override
@@ -28,4 +30,20 @@ public class AccountAdapter implements RegisterUserPort {
                 new Account.Role(save.getRole())
         );
     }
+
+        @Override
+        public Account findByUsername(String username) {
+            AccountEntity accountEntity = accountRepository.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("Not found username: " + username));
+
+            return Account.from(
+                    new Account.Id(accountEntity.getId()),
+                    new Account.Username(accountEntity.getUsername()),
+                    new Account.Password(accountEntity.getPassword()),
+                    new Account.Email(accountEntity.getEmail()),
+                    new Account.Age(accountEntity.getAge()),
+                    new Account.Role(accountEntity.getRole())
+            );
+        }
+
 }
