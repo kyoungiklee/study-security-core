@@ -3,6 +3,7 @@ package org.openuri.study.security.core.config;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.openuri.study.security.core.application.security.common.FormAuthenticationDetailSource;
+import org.openuri.study.security.core.application.security.handler.CustomAuthenticationFailureHandler;
 import org.openuri.study.security.core.application.security.handler.CustomAuthenticationSuccessHandler;
 import org.openuri.study.security.core.application.security.provider.FormAutenticationProvider;
 import org.openuri.study.security.core.application.service.CustomUserDetailService;
@@ -25,6 +26,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 @Configuration
@@ -39,6 +41,11 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         return new CustomAuthenticationSuccessHandler();
+    }
+
+    @Bean
+    public AuthenticationFailureHandler authenticationFailureHandler() {
+        return new CustomAuthenticationFailureHandler();
     }
     /**
      * formLoginConfigurer를 사용하여 로그인 페이지를 설정한다. {@link HttpSecurity} 에서 fotmLogin() 파라미터로
@@ -56,6 +63,7 @@ public class SecurityConfig {
                 .usernameParameter("username")
                 .passwordParameter("password")
                 .authenticationDetailsSource(authenticationDetailsSource())
+                .failureHandler(authenticationFailureHandler())
                 .successHandler(authenticationSuccessHandler())
                 .permitAll();
     }
