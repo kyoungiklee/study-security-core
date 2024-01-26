@@ -3,6 +3,7 @@ package org.openuri.study.security.core.application.security.provider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openuri.study.security.core.application.security.common.FormWebAuthenticationDetails;
+import org.openuri.study.security.core.application.service.AccountContext;
 import org.openuri.study.security.core.application.service.CustomUserDetailService;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -33,15 +34,15 @@ public class FormAutenticationProvider implements AuthenticationProvider {
         String password = authentication.getCredentials().toString();
 
         // username, password를 이용해서 인증을 진행한다.
-        UserDetails userDetails;
+        AccountContext accountContext;
         try {
-            userDetails = customUserDetailService.loadUserByUsername(username);
+            accountContext = (AccountContext) customUserDetailService.loadUserByUsername(username);
         } catch (Exception e) {
             throw new UsernameNotFoundException("존재하지 않는 사용자입니다.");
         }
-        log.info("userDetails: {}", userDetails);
+        log.info("accountContext: {}", accountContext);
 
-        boolean matches = passwordEncoder.matches(password, userDetails.getPassword());
+        boolean matches = passwordEncoder.matches(password, accountContext.getPassword());
         log.info("matches: {}", matches);
         if (!matches) {
             throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
@@ -53,7 +54,7 @@ public class FormAutenticationProvider implements AuthenticationProvider {
             throw new InsufficientAuthenticationException("인증정보가 확인되지 않습니다.");
         }
         // 인증이 성공하면 Authentication 객체를 리턴한다.
-        return new UsernamePasswordAuthenticationToken(username, password, userDetails.getAuthorities());
+        return new UsernamePasswordAuthenticationToken(accountContext.getAccount(), password, accountContext.getAuthorities());
     }
 
     @Override

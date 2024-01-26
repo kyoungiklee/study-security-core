@@ -32,7 +32,7 @@ public class CustomUserDetailService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
         Account account = findUserPort.findByUsername(username);
-        return new User(account.getUsername(), account.getPassword(), authorities(account));
+        return new AccountContext(account, authorities(account));
     }
 
     private Collection<? extends GrantedAuthority> authorities(Account account) {

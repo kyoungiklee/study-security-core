@@ -3,8 +3,11 @@ package org.openuri.study.security.core.adapter.in.web.login;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.openuri.study.security.core.domain.Account;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -51,5 +54,16 @@ public class LoginController {
             new SecurityContextLogoutHandler().logout(request, response, authentication);
         }
         return "redirect:/login";
+    }
+
+    @GetMapping("/denied")
+    public String denied(@RequestParam(value = "exception", required = false) String exception,
+                         HttpServletRequest request, HttpServletResponse response, Model model) {
+        log.info("exception : {}", exception);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Account principal = (Account) authentication.getPrincipal();
+        model.addAttribute("username", principal.getUsername());
+        model.addAttribute("exception", exception);
+        return "login/denied";
     }
 }

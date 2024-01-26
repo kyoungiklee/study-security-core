@@ -3,6 +3,7 @@ package org.openuri.study.security.core.config;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.openuri.study.security.core.application.security.common.FormAuthenticationDetailSource;
+import org.openuri.study.security.core.application.security.handler.CustomAccessDeniedHandler;
 import org.openuri.study.security.core.application.security.handler.CustomAuthenticationFailureHandler;
 import org.openuri.study.security.core.application.security.handler.CustomAuthenticationSuccessHandler;
 import org.openuri.study.security.core.application.security.provider.FormAutenticationProvider;
@@ -18,6 +19,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +28,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
@@ -47,6 +50,7 @@ public class SecurityConfig {
     public AuthenticationFailureHandler authenticationFailureHandler() {
         return new CustomAuthenticationFailureHandler();
     }
+
     /**
      * formLoginConfigurer를 사용하여 로그인 페이지를 설정한다. {@link HttpSecurity} 에서 fotmLogin() 파라미터로
      * {@link Customizer}를 사용하여 설정할 수 있다.
@@ -74,6 +78,27 @@ public class SecurityConfig {
     }
 
     /**
+     * AccessDeniedHandler를 사용하여 접근 거부 페이지를 설정한다.
+     *
+     * @return AccessDeniedHandler
+     */
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        CustomAccessDeniedHandler customAccessDeniedHandler = new CustomAccessDeniedHandler();
+        customAccessDeniedHandler.setErrorPage("/denied"); // 접근 거부 페이지를 설정한다.
+        return customAccessDeniedHandler;
+    }
+
+    /**
+     * ExceptionHandlingConfigurer를 사용하여 접근 거부 페이지를 설정한다.
+     * @return {@link Customizer}
+     */
+    @Bean
+    Customizer<ExceptionHandlingConfigurer<HttpSecurity>> exceptionHandlingCustomizer() {
+        return exceptionHandlingConfigurer -> exceptionHandlingConfigurer.accessDeniedHandler(accessDeniedHandler());
+    }
+
+    /**
      * {@code HttpSecutiry}를 파라미터로 받아 보안 필터를 설정한다.
      * <p>{@link HttpSecurity} 에서
      *
@@ -90,7 +115,9 @@ public class SecurityConfig {
                 .requestMatchers("/mypage").hasRole("USER")
                 .requestMatchers("/config").hasRole("ADMIN")
                 .anyRequest().authenticated()
-        ).formLogin(formLoginConfigurer());
+        ).formLogin(formLoginConfigurer()
+        ).exceptionHandling(exceptionHandlingCustomizer())
+        ;
         return http.build();
     }
 
