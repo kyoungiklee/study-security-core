@@ -3,6 +3,7 @@ package org.openuri.study.security.core.config;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.openuri.study.security.core.application.security.common.FormAuthenticationDetailSource;
+import org.openuri.study.security.core.application.security.handler.CustomAuthenticationSuccessHandler;
 import org.openuri.study.security.core.application.security.provider.FormAutenticationProvider;
 import org.openuri.study.security.core.application.service.CustomUserDetailService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -24,6 +25,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +33,13 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
 
+    /**
+     * SuccessHandler를 사용하여 로그인 성공 후 이동할 페이지를 설정한다.
+     */
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return new CustomAuthenticationSuccessHandler();
+    }
     /**
      * formLoginConfigurer를 사용하여 로그인 페이지를 설정한다. {@link HttpSecurity} 에서 fotmLogin() 파라미터로
      * {@link Customizer}를 사용하여 설정할 수 있다.
@@ -47,6 +56,7 @@ public class SecurityConfig {
                 .usernameParameter("username")
                 .passwordParameter("password")
                 .authenticationDetailsSource(authenticationDetailsSource())
+                .successHandler(authenticationSuccessHandler())
                 .permitAll();
     }
 
