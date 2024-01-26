@@ -15,6 +15,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+/**
+ * 사용자 인증을 위한 AuthenticationProvider 구현체
+ * <p> FormAuthenticationProvider를 이용하여 커스터마징된 인증을 구현한다.
+ */
 @Component
 @Slf4j
 @RequiredArgsConstructor
