@@ -1,6 +1,5 @@
 package org.openuri.study.security.core.application.service;
 
-
 import lombok.RequiredArgsConstructor;
 import org.openuri.study.security.core.application.port.in.RegisterUserCommand;
 import org.openuri.study.security.core.application.port.in.RegisterUserUseCase;
@@ -14,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class UserService implements RegisterUserUseCase {
     private final RegisterUserPort registerUserPort;
     private final PasswordEncoder passwordEncoder;
+
     @Override
     public Account register(RegisterUserCommand command) {
 

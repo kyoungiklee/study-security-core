@@ -1,7 +1,7 @@
 package org.openuri.study.security.core.adapter.out.persistence.account;
 
 import lombok.RequiredArgsConstructor;
-import org.openuri.study.security.core.application.port.FindUserPort;
+import org.openuri.study.security.core.application.port.out.FindUserPort;
 import org.openuri.study.security.core.application.port.out.RegisterUserPort;
 import org.openuri.study.security.core.common.Adapter;
 import org.openuri.study.security.core.domain.Account;

@@ -1,11 +1,14 @@
 package org.openuri.study.security.core.config;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.openuri.study.security.core.application.service.CustomAutenticationProvider;
+import org.openuri.study.security.core.application.security.common.FormAuthenticationDetailSource;
+import org.openuri.study.security.core.application.security.provider.FormAutenticationProvider;
 import org.openuri.study.security.core.application.service.CustomUserDetailService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
@@ -27,8 +30,15 @@ import org.springframework.security.web.SecurityFilterChain;
 @Slf4j
 public class SecurityConfig {
 
+
+    /**
+     * formLoginConfigurer를 사용하여 로그인 페이지를 설정한다. {@link HttpSecurity} 에서 fotmLogin() 파라미터로
+     * {@link Customizer}를 사용하여 설정할 수 있다.
+     *
+     * @return Customizer<FormLoginConfigurer < HttpSecurity>>
+     */
     @Bean
-    public Customizer<FormLoginConfigurer<HttpSecurity>>  formLoginConfigurer() {
+    public Customizer<FormLoginConfigurer<HttpSecurity>> formLoginConfigurer() {
         return formLoginConfigurer -> formLoginConfigurer
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
@@ -36,9 +46,23 @@ public class SecurityConfig {
                 .failureUrl("/login?error=true")
                 .usernameParameter("username")
                 .passwordParameter("password")
+                .authenticationDetailsSource(authenticationDetailsSource())
                 .permitAll();
     }
 
+    @Bean
+    public AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource() {
+        return new FormAuthenticationDetailSource();
+    }
+
+    /**
+     * {@code HttpSecutiry}를 파라미터로 받아 보안 필터를 설정한다.
+     * <p>{@link HttpSecurity} 에서
+     *
+     * @param http {@link HttpSecurity} 사용자 정의 보안 필터 체인을 설정하기 위한 파라미터이다.
+     * @return SecurityFilterChain 사용자 정의 필터체인을 반환한다.
+     * @see #filterChain(HttpSecurity)
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -52,6 +76,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * PathRequest를 사용하여 정적 자원의 요청은 Spring Security가 처리하지 않도록 설정한다.
+     * <p>
+     * {@link WebSecurityCustomizer}를 사용하여 설정할 수 있다.
+     *
+     * @return WebSecurityCustomizer
+     */
     @Bean
     public WebSecurityCustomizer ignoringCustomizer() {
         return web -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
@@ -73,17 +104,19 @@ public class SecurityConfig {
 
     /**
      * CustomAutenticationProvider를 사용하여 사용자를 인증 처리한다.
+     *
      * @param userDetailsService CustomUserDetailService
-     * @param passwordEncoder PasswordEncoder
+     * @param passwordEncoder    PasswordEncoder
      * @return AuthenticationProvider
      */
     @Bean
     public AuthenticationProvider authenticationProvider(CustomUserDetailService userDetailsService, PasswordEncoder passwordEncoder) {
-        return new CustomAutenticationProvider(userDetailsService, passwordEncoder);
+        return new FormAutenticationProvider(userDetailsService, passwordEncoder);
     }
 
     /**
      * InMemoryUserDetailsManager를 사용하여 사용자 정보를 관리할 수 있다.
+     * spring security 설정 점검을 위해 테스트용으로 사용할 수 있다.
      *
      * @return UserDetailsService
      */

@@ -1,7 +1,7 @@
 package org.openuri.study.security.core.application.service;
 
 import lombok.RequiredArgsConstructor;
-import org.openuri.study.security.core.application.port.FindUserPort;
+import org.openuri.study.security.core.application.port.out.FindUserPort;
 import org.openuri.study.security.core.common.UseCase;
 import org.openuri.study.security.core.domain.Account;
 import org.springframework.security.core.GrantedAuthority;

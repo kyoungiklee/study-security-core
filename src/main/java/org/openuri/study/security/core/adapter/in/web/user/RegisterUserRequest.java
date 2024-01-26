@@ -18,6 +18,8 @@ public class RegisterUserRequest {
     @NotBlank(message = "Role is mandatory")
     private String role;
 
+
+
     @Override
     public String toString() {
         return "RegisterUserRequest{" +

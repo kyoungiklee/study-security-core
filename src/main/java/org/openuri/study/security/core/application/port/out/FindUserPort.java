@@ -1,4 +1,4 @@
-package org.openuri.study.security.core.application.port;
+package org.openuri.study.security.core.application.port.out;
 
 import org.openuri.study.security.core.domain.Account;
 
