@@ -1,7 +1,6 @@
 package org.openuri.study.security.core.application.service;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openuri.study.security.core.domain.Account;
 import org.springframework.security.core.GrantedAuthority;

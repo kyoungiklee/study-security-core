@@ -5,7 +5,6 @@ import org.openuri.study.security.core.application.port.out.FindUserPort;
 import org.openuri.study.security.core.common.UseCase;
 import org.openuri.study.security.core.domain.Account;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

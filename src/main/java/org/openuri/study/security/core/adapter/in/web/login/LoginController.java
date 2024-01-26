@@ -6,13 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.openuri.study.security.core.domain.Account;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
@@ -24,17 +21,17 @@ public class LoginController {
      * <p>인증 실패시 로그인 페이지로 리다아렉트 된다
      * 에러시 전달된 파라미터는 모델에 담아 뷰에 전달 된다.
      * </p>
-     * @param error 로그인 실패시 error 파라미터가 존재한다.
+     *
+     * @param error     로그인 실패시 error 파라미터가 존재한다.
      * @param exception 로그인 실패시 exception 파라미터가 존재한다.
-     * @param request 요청정보  {@link HttpServletRequest}
-     * @param response 응답정보 {@link HttpServletResponse}
-     * @param model 뷰에 전달할 데이터
+     * @param model     뷰에 전달할 데이터
      * @return 로그인 페이지
      */
     @GetMapping("/login")
     public String login(@RequestParam(value = "error", required = false) String error,
                         @RequestParam(value = "exception", required = false) String exception,
-                        HttpServletRequest request, HttpServletResponse response, Model model) {
+                        Model model) {
+
         log.info("error : {}", error);
         log.info("exception : {}", exception);
         if (error != null) {
@@ -58,7 +55,7 @@ public class LoginController {
 
     @GetMapping("/denied")
     public String denied(@RequestParam(value = "exception", required = false) String exception,
-                         HttpServletRequest request, HttpServletResponse response, Model model) {
+                         Model model) {
         log.info("exception : {}", exception);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Account principal = (Account) authentication.getPrincipal();
