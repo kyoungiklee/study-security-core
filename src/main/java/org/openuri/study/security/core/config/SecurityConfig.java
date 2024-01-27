@@ -6,15 +6,11 @@ import org.openuri.study.security.core.application.security.common.FormAuthentic
 import org.openuri.study.security.core.application.security.handler.CustomAccessDeniedHandler;
 import org.openuri.study.security.core.application.security.handler.CustomAuthenticationFailureHandler;
 import org.openuri.study.security.core.application.security.handler.CustomAuthenticationSuccessHandler;
-import org.openuri.study.security.core.application.security.provider.FormAutenticationProvider;
-import org.openuri.study.security.core.application.service.CustomUserDetailService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,7 +31,31 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 @Configuration
 @EnableWebSecurity
 @Slf4j
+@Order(1)
 public class SecurityConfig {
+    /**
+     * {@code HttpSecutiry}를 파라미터로 받아 보안 필터를 설정한다.
+     * <p>{@link HttpSecurity} 에서
+     *
+     * @param http {@link HttpSecurity} 사용자 정의 보안 필터 체인을 설정하기 위한 파라미터이다.
+     * @return SecurityFilterChain 사용자 정의 필터체인을 반환한다.
+     * @see #webFilterChain(HttpSecurity) (HttpSecurity)
+     */
+    @Bean
+    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+
+        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers("/", "/users", "/error*", "login*").permitAll()
+                        .requestMatchers("/messages").hasRole("MANAGER")
+                        .requestMatchers("/mypage").hasRole("USER")
+                        .requestMatchers("/config").hasRole("ADMIN")
+                        .anyRequest().authenticated())
+                .formLogin(formLoginConfigurer())
+                .exceptionHandling(exceptionHandlingCustomizer())
+        ;
+
+        return http.build();
+    }
 
 
     /**
@@ -91,6 +111,7 @@ public class SecurityConfig {
 
     /**
      * ExceptionHandlingConfigurer를 사용하여 접근 거부 페이지를 설정한다.
+     *
      * @return {@link Customizer}
      */
     @Bean
@@ -98,28 +119,6 @@ public class SecurityConfig {
         return exceptionHandlingConfigurer -> exceptionHandlingConfigurer.accessDeniedHandler(accessDeniedHandler());
     }
 
-    /**
-     * {@code HttpSecutiry}를 파라미터로 받아 보안 필터를 설정한다.
-     * <p>{@link HttpSecurity} 에서
-     *
-     * @param http {@link HttpSecurity} 사용자 정의 보안 필터 체인을 설정하기 위한 파라미터이다.
-     * @return SecurityFilterChain 사용자 정의 필터체인을 반환한다.
-     * @see #filterChain(HttpSecurity)
-     */
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                .requestMatchers("/", "/users").permitAll()
-                .requestMatchers("/messages").hasRole("MANAGER")
-                .requestMatchers("/mypage").hasRole("USER")
-                .requestMatchers("/config").hasRole("ADMIN")
-                .anyRequest().authenticated()
-        ).formLogin(formLoginConfigurer()
-        ).exceptionHandling(exceptionHandlingCustomizer())
-        ;
-        return http.build();
-    }
 
     /**
      * PathRequest를 사용하여 정적 자원의 요청은 Spring Security가 처리하지 않도록 설정한다.
@@ -133,31 +132,6 @@ public class SecurityConfig {
         return web -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
-    /**
-     * CustomUserDetailService를 사용하여 사용자 정보를 DB Access를 통해 관리할 수 있다.
-     *
-     * @param userDetailsService UserDetailsService
-     * @param passwordEncoder    PasswordEncoder
-     * @return AuthenticationManager
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(CustomUserDetailService userDetailsService, PasswordEncoder passwordEncoder) {
-        AuthenticationProvider authenticationProvider = authenticationProvider(userDetailsService, passwordEncoder);
-        return new ProviderManager(authenticationProvider);
-    }
-
-
-    /**
-     * CustomAutenticationProvider를 사용하여 사용자를 인증 처리한다.
-     *
-     * @param userDetailsService CustomUserDetailService
-     * @param passwordEncoder    PasswordEncoder
-     * @return AuthenticationProvider
-     */
-    @Bean
-    public AuthenticationProvider authenticationProvider(CustomUserDetailService userDetailsService, PasswordEncoder passwordEncoder) {
-        return new FormAutenticationProvider(userDetailsService, passwordEncoder);
-    }
 
     /**
      * InMemoryUserDetailsManager를 사용하여 사용자 정보를 관리할 수 있다.

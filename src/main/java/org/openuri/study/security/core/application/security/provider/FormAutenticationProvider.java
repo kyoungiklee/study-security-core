@@ -1,10 +1,10 @@
 package org.openuri.study.security.core.application.security.provider;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openuri.study.security.core.application.security.common.FormWebAuthenticationDetails;
 import org.openuri.study.security.core.application.service.AccountContext;
 import org.openuri.study.security.core.application.service.CustomUserDetailService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
@@ -21,10 +21,20 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class FormAutenticationProvider implements AuthenticationProvider {
-    private final CustomUserDetailService customUserDetailService;
-    private final PasswordEncoder passwordEncoder;
+    private CustomUserDetailService customUserDetailService;
+
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public void setCustomUserDetailService(CustomUserDetailService customUserDetailService) {
+    	this.customUserDetailService = customUserDetailService;
+    }
+
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+    	this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -37,6 +47,8 @@ public class FormAutenticationProvider implements AuthenticationProvider {
         try {
             accountContext = (AccountContext) customUserDetailService.loadUserByUsername(username);
         } catch (Exception e) {
+            log.info("exception: {}", e.getMessage());
+
             throw new UsernameNotFoundException("존재하지 않는 사용자입니다.");
         }
         log.info("accountContext: {}", accountContext);
