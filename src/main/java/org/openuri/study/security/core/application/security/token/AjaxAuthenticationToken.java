@@ -2,22 +2,32 @@ package org.openuri.study.security.core.application.security.token;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.SpringSecurityCoreVersion;
 
 import java.util.Collection;
 
 public class AjaxAuthenticationToken extends AbstractAuthenticationToken {
 
-    private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
     private final Object principal;
     private Object credentials;
 
+    /**
+     * 인증 전
+     * @param principal 사용자 아이디
+     * @param credentials 사용자 비밀번호
+     */
     public AjaxAuthenticationToken(Object principal, Object credentials) {
         super(null);
         this.principal = principal;
         this.credentials = credentials;
         setAuthenticated(false);
     }
+
+    /**
+     * 인증 후
+     * @param principal 사용자 아이디
+     * @param credentials 사용자 비밀번호(암호화된)
+     * @param authorities 사용자 권한
+     */
 
     public AjaxAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);

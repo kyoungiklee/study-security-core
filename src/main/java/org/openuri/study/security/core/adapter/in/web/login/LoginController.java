@@ -27,7 +27,7 @@ public class LoginController {
      * @param model     뷰에 전달할 데이터
      * @return 로그인 페이지
      */
-    @GetMapping("/login")
+    @GetMapping(value = {"/login", "/api/login"})
     public String login(@RequestParam(value = "error", required = false) String error,
                         @RequestParam(value = "exception", required = false) String exception,
                         Model model) {
@@ -53,7 +53,7 @@ public class LoginController {
         return "redirect:/login";
     }
 
-    @GetMapping("/denied")
+    @GetMapping(value = {"/denied", "/api/denied"})
     public String denied(@RequestParam(value = "exception", required = false) String exception,
                          Model model) {
         log.info("exception : {}", exception);

@@ -9,6 +9,8 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +47,15 @@ public class AjaxAutenticationProvider implements AuthenticationProvider {
         if (!matches) {
             throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
         }
-        return new AjaxAuthenticationToken(accountContext.getAccount(), null, accountContext.getAuthorities());
+        AjaxAuthenticationToken ajaxAuthenticationToken = new AjaxAuthenticationToken(accountContext.getAccount()
+                , null, accountContext.getAuthorities());
+
+        /*SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(ajaxAuthenticationToken);
+        SecurityContextHolder.setContext(context);*/
+
+        return ajaxAuthenticationToken;
+
     }
 
     @Override

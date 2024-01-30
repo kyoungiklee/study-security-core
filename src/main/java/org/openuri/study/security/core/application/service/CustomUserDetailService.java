@@ -5,11 +5,14 @@ import org.openuri.study.security.core.application.port.out.FindUserPort;
 import org.openuri.study.security.core.common.UseCase;
 import org.openuri.study.security.core.domain.Account;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,8 +37,10 @@ public class CustomUserDetailService implements UserDetailsService {
         return new AccountContext(account, authorities(account));
     }
 
-    private Collection<? extends GrantedAuthority> authorities(Account account) {
+    private List<? extends GrantedAuthority> authorities(Account account) {
+        List<GrantedAuthority> roles = new ArrayList<>();
+        roles.add(new SimpleGrantedAuthority(account.getRole()));
 
-        return Set.of((GrantedAuthority) account::getRole);
+        return roles;
     }
 }

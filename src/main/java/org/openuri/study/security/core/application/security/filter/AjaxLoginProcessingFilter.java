@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.openuri.study.security.core.adapter.in.web.login.LoginRequest;
 import org.openuri.study.security.core.application.security.token.AjaxAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
@@ -13,9 +14,9 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.io.IOException;
 
-public class AjaxAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
+public class AjaxLoginProcessingFilter extends AbstractAuthenticationProcessingFilter {
     private final ObjectMapper objectMapper = new ObjectMapper();
-    public AjaxAuthenticationFilter() {
+    public AjaxLoginProcessingFilter() {
         super(new AntPathRequestMatcher("/api/login", "POST"));
 
     }
@@ -32,8 +33,8 @@ public class AjaxAuthenticationFilter extends AbstractAuthenticationProcessingFi
         }
 
         AjaxAuthenticationToken ajaxAuthenticationToken = new AjaxAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
-
-        return getAuthenticationManager().authenticate(ajaxAuthenticationToken);
+        AuthenticationManager authenticationManager = getAuthenticationManager();
+        return authenticationManager.authenticate(ajaxAuthenticationToken);
     }
 
     private boolean isAjax(HttpServletRequest request) {

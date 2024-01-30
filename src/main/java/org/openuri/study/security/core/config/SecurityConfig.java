@@ -2,21 +2,25 @@ package org.openuri.study.security.core.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.openuri.study.security.core.application.security.common.AjaxLoginAuthenticationEntryPoint;
 import org.openuri.study.security.core.application.security.common.FormAuthenticationDetailSource;
-import org.openuri.study.security.core.application.security.handler.CustomAccessDeniedHandler;
-import org.openuri.study.security.core.application.security.handler.CustomAuthenticationFailureHandler;
-import org.openuri.study.security.core.application.security.handler.CustomAuthenticationSuccessHandler;
+import org.openuri.study.security.core.application.security.handler.*;
+import org.openuri.study.security.core.application.security.provider.AjaxAutenticationProvider;
+import org.openuri.study.security.core.application.security.provider.FormAutenticationProvider;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -27,6 +31,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.context.DelegatingSecurityContextRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -42,20 +50,127 @@ public class SecurityConfig {
      * @see #webFilterChain(HttpSecurity) (HttpSecurity)
      */
     @Bean
+    @Order(1)
     public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 
-        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/", "/users", "/error*", "login*").permitAll()
+        http
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers("/", "/admin/**", "/error*", "login*").permitAll()
                         .requestMatchers("/messages").hasRole("MANAGER")
                         .requestMatchers("/mypage").hasRole("USER")
                         .requestMatchers("/config").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(formLoginConfigurer())
                 .exceptionHandling(exceptionHandlingCustomizer())
+                .httpBasic(Customizer.withDefaults())
+                .sessionManagement(sessionManagement -> sessionManagement
+                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+                        .sessionFixation().newSession())
         ;
 
         return http.build();
     }
+
+    @Bean
+    @Order(0)
+    public SecurityFilterChain ajaxFilterChain(HttpSecurity http) throws Exception {
+        /*
+        인증매니저 생성 (참고)
+        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        authenticationManagerBuilder.authenticationProvider(ajaxAuthenticationProvider());
+        authenticationManagerBuilder.parentAuthenticationManager(null);
+        authenticationManagerBuilder.build();
+         */
+
+        http
+                .securityMatcher("/api/**")
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers("/api/login").permitAll()
+                        .requestMatchers("/api/messages").hasRole("MANAGER")
+                        .anyRequest().authenticated())
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .accessDeniedHandler(ajaxAccessDeniedHandler())
+                        .authenticationEntryPoint(ajaxLoginAuthenticationEntryPoint())
+                )
+                .sessionManagement(sessionManagement -> sessionManagement
+                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+                        .sessionFixation().newSession())
+                //.addFilterBefore(ajaxAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+        ;
+        customConfigurer(http);
+        return http.build();
+    }
+
+    public void customConfigurer(HttpSecurity http) throws Exception {
+        http.with(new AjaxLoginConfigure(), (dsl) -> {
+            dsl.securityContextRepository(securityContextRepository());
+            dsl.successHandlerAjax(ajaxAuthenticationSuccessHandler());
+            dsl.failureHandlerAjax(ajaxAutenticationFailureHandler());
+            dsl.authenticationManager(authenticationManager());
+        });
+
+        System.out.println();
+    }
+
+    /**
+     * ajax 요청 시 세션에서 {@link SecurityContextRepository}를 가져와 인증을 처리해주는 부분이 정확히 동작되지 않아 아래의
+     * 요청을 추가한다
+     * <p>
+     * 원인은 {@link org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter}의
+     * 기본 {@link SecurityContextRepository}가 {@link RequestAttributeSecurityContextRepository}로 설정되어 있어서
+     * 세션에서 {@link SecurityContextRepository}를 가져오지 못하는 것이다.
+     * <p>
+     * {@link org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter} 에서는 
+     * {@link SecurityContextRepository}가 {@link DelegatingSecurityContextRepository}로 설정되어 있다
+     * <p>
+     * {@link DelegatingSecurityContextRepository}는 {@link HttpSessionSecurityContextRepository}와 
+     * {@link RequestAttributeSecurityContextRepository}를 파라미터로 사용한다.
+     * 세션관리를 위해서는 {@link HttpSessionSecurityContextRepository}를 사용해야 하므로 아래와 같이 설정한다.
+     * <p>
+     * {@link DelegatingSecurityContextRepository}를 사용하여 {@link HttpSessionSecurityContextRepository}와
+     * {@link RequestAttributeSecurityContextRepository}를 사용한다.
+     *
+     * @return SecurityContextRepository
+     */
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new DelegatingSecurityContextRepository(
+                new HttpSessionSecurityContextRepository(),
+                new RequestAttributeSecurityContextRepository()
+        );
+    }
+
+    @Bean
+    public AjaxAuthenticationSuccessHandler ajaxAuthenticationSuccessHandler() {
+        return new AjaxAuthenticationSuccessHandler();
+    }
+
+    @Bean
+    public AuthenticationFailureHandler ajaxAutenticationFailureHandler() {
+        return new AjaxAuthenticationFailureHandler();
+    }
+
+    @Bean
+    public AjaxLoginAuthenticationEntryPoint ajaxLoginAuthenticationEntryPoint() {
+        return new AjaxLoginAuthenticationEntryPoint();
+    }
+
+
+    @Bean
+    public AjaxAccessDeniedHandler ajaxAccessDeniedHandler() {
+        return new AjaxAccessDeniedHandler();
+    }
+
+
+//    @Bean
+//    protected Filter ajaxAuthenticationFilter() {
+//
+//        AjaxLoginProcessingFilter ajaxAuthenticationFilter = new AjaxLoginProcessingFilter();
+//        ajaxAuthenticationFilter.setAuthenticationManager(authenticationManager());
+//        ajaxAuthenticationFilter.setAuthenticationSuccessHandler(ajaxAuthenticationSuccessHandler());
+//        ajaxAuthenticationFilter.setAuthenticationFailureHandler(ajaxAutenticationFailureHandler());
+//        return ajaxAuthenticationFilter;
+//    }
 
 
     /**
@@ -95,6 +210,24 @@ public class SecurityConfig {
     @Bean
     public AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource() {
         return new FormAuthenticationDetailSource();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager() {
+        return new ProviderManager(
+                formAutenticationProvider(),
+                ajaxAuthenticationProvider()
+        );
+    }
+
+    @Bean
+    public AjaxAutenticationProvider ajaxAuthenticationProvider() {
+        return new AjaxAutenticationProvider();
+    }
+
+    @Bean
+    public FormAutenticationProvider formAutenticationProvider() {
+        return new FormAutenticationProvider();
     }
 
     /**

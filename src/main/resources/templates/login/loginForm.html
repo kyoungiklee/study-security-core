@@ -1,9 +1,43 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<!--csrf를 값을 ajax에서 가져오기 위한 meta값 설정-->
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}" />
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}" />
+
 <head th:replace="~{layout/header :: userHead}">
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>로그인 폼</title>
 </head>
+<script>
+    function formLogin(e) {
+        var username = $("input[name='username']").val().trim();
+        var password = $("input[name='password']").val().trim();
+        var data = {"username": username, "password": password};
+
+        var csrfHeader = $("meta[name='_csrf_header']").attr('content');
+        var csrfToken = $("meta[name='_csrf']").attr('content');
+
+        $.ajax({
+            type: "POST",
+            url: "/api/login",
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader(csrfHeader, csrfToken);
+            },
+            success: function (response) {
+                console.log(response)
+                location.href = "/";
+            },
+            error: function (response, status, error) {
+                console.log();
+                window.location.href = "/login?error=true&exception=" + xhr.responseText;
+            }
+        });
+        }
+</script>
 <body>
 <div th:replace="~{layout/top :: header}"></div>
 <div class="container text-center"></div>
@@ -26,7 +60,10 @@
                     <input type="password" class="form-control" id="password" name="password" placeholder="비밀번호" required>
 
                 </div>
-                <button class="btn btn-lg btn-primary btn-block" type="submit">로그인</button>
+                <div th:type="toolbarButtonGraphics" class="form-group">
+                    <button type="button" class="btn btn-lg btn-primary btn-block" onclick="formLogin(this)">로그인</button>
+                </div>
+                <!--<button class="btn btn-lg btn-primary btn-block" type="submit">로그인</button>-->
 
             </form>
         </div>
